@@ -11,7 +11,7 @@
         min-width: 320px;
         min-height: 675px;
         height: 100vh;
-        background-image: url('../images/ferrari-vermelha-1200.webp');
+        background-image: url('../../public/images/ferrari-vermelha-1200.webp');
         background-size: cover;
         background-position-x: 80%;
         background-position-y: center;
@@ -90,7 +90,7 @@
             height: 100vh;
             max-height: initial;
             background-image: url(
-                '../images/ferrari-vermelha.webp'
+                '../../public/images/ferrari-vermelha.webp'
             );
         }
     }    
@@ -100,7 +100,7 @@
     #home {
         header {
             background-image: url(
-                '../images/ferrari-vermelha@2x.webp'
+                '../../public/images/ferrari-vermelha@2x.webp'
             );
         }
     }    

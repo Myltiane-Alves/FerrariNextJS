@@ -12,10 +12,15 @@ body, div, article, aside, footer, header, main, nav, section, ul, ol, li, butto
 
 body {
     margin: 0;
+   
+}
+
+#__next {
     flex-direction: column;
     background-color: var(--bg-color);
+    width: 100%;
     > main {
-        min-height: calc(100vh - 400px);
+      min-height: calc(100vh - 400px);
     }
 }
 

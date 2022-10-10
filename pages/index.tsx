@@ -1,11 +1,22 @@
 import type { NextPage } from 'next'
 
+import Contact from '../components/Home/Contact'
+import Footer from '../components/Home/Footer'
+import Header from '../components/Home/Header'
 
 
-const Home: NextPage = () => {
+
+
+const ComponentPage: NextPage = () => {
   return (
-    <div></div>
+    <>
+      <Header />
+     
+    
+      <Contact />
+      <Footer />
+    </>
   )
 }
 
-export default Home
+export default ComponentPage;
