@@ -1,19 +1,10 @@
 import Link from "next/link";
-import { useEffect, useState } from "react";
+
+import { useMenu } from "../../../context/MenuContext";
 
 const Header = () => {
-
-    const [isOpen, setIsOpen] = useState(false);
-
-    useEffect(() => {
-
-        if (isOpen) {
-            document.body.classList.add('open-menu');
-        } else {
-            document.body.classList.remove('open-menu');
-        }
-    }, [isOpen]);
-
+    const {  setIsOpen } = useMenu();
+    
     return (
         <>
             <header id="header">
