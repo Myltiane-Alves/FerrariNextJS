@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const Service = () => {
     return (
         <>
@@ -22,7 +24,9 @@ const Service = () => {
                         </figure>
                     </div>
 
-                    <a href="schedules-new.html" className="btn">Agendar Serviço</a>
+                    <Link href="/schedules-new">
+                      <a className="btn">Agendar Serviço</a>
+                    </Link>
                 </div>
 
                 <img src="/images/services.svg" alt="Serviços" />
