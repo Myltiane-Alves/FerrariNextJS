@@ -1,3 +1,5 @@
+import Item from "./Item";
+
 const Contact = () => {
     return (
         <>
@@ -37,26 +39,26 @@ const Contact = () => {
                 </section>
                 <hr className="divider" />
                 <ul className="contacts">
-                    <li>
-                        <img src="/images/icon-google-place.svg" alt="Icon" />
-                        <p className="title">OUR HEADQUARTERS</p>
-                        <p>Modena, Itália</p>
-                    </li>
-                    <li>
-                        <img src="/images/icon-phone.svg" alt="Icon" />
-                        <p className="title">SPEAK TO US</p>
-                        <p>(123) 456 7890</p>
-                    </li>
-                    <li>
-                        <img src="/images/icon-skype.svg" alt="Icon" />
-                        <p className="title">MAKE A VIDEO CALL</p>
-                        <p>FerrariOnSkype</p>
-                    </li>
-                    <li>
-                        <img src="/images/icon-google-place.svg" alt="Icon" />
-                        <p className="title">FOLLOW ON TWITTER</p>
-                        <p>2.3M Followers</p>
-                    </li>
+                    <Item
+                      image="/images/icon-google-place.svg"
+                      title="OUR HEADQUARTERS"
+                      text="Modena, Itália"
+                    />
+                    <Item
+                      image="/images/icon-phone.svg"
+                      title="SPEAK TO US"
+                      text="(123) 456 7890"
+                    />
+                    <Item
+                      image="/images/icon-skype.svg"
+                      title="MAKE A VIDEO CALL"
+                      text="FerrariOnSkype"
+                    />
+                    <Item
+                      image="/images/icon-google-place.svg"
+                      title="FOLLOW ON TWITTER"
+                      text="2.3M Followers"
+                    />
                 </ul>
             </section>
         </>

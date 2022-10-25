@@ -22,11 +22,10 @@ const ComponentPage: NextPage = () => {
 
 export default ComponentPage;
 
-export const getServerSideProps = withIronSessionSsr( async (context: 
+export const getServerSideProps = withIronSessionSsr( async (context:
 GetServerSidePropsContext) => {
-  
-  context.req.session.token = "token";
-  await context.req.session.save();
+
+  console.log('TOKEN', context.req.session.token);
 
   return {
     props: {
