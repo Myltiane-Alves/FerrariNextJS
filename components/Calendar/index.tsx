@@ -1,12 +1,71 @@
+import { useCallback, useEffect, useState } from "react";
+import {
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  format,
+  startOfMonth,
+  startOfWeek,
+  subMonths,
+  differenceInSeconds,
+  addDays
+} from "date-fns";
+import locale from "date-fns/locale/pt-BR";
 
 const Calendar = () => {
+
+  const [today, setToday] = useState(new Date());
+  const [startMonth, setStartMonth] = useState(startOfMonth(new Date()));
+  const [dates, setDates] = useState<Date[]>([]);
+  const [startAt, setStartAt] = useState(startOfWeek(startMonth));
+  const [endAt, setEndAt] = useState(endOfWeek(endOfMonth(startMonth)));
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const getDayClassName = useCallback((dt: Date) => {
+    return [
+      format(dt, 'yyyyMM') < format(startMonth, 'yyyyMM') && 'month-prev',
+      format(dt, 'yyyyMM') > format(startMonth, 'yyyyMM') && 'month-next',
+      format(dt, 'yyyy-MM-dd') === format(new Date(), 'yyyyMMdd') && 'active',
+      selectedDate && format(dt, 'yyyy-MM-dd') === format(selectedDate, 'yyyyMMdd') && 'selected',
+    ].join(' ');
+  }, [startMonth, selectedDate]);
+
+  useEffect(() => {
+
+    setStartAt(startOfWeek(startMonth));
+    setEndAt(endOfWeek(endOfMonth(startMonth)));
+  }, [startMonth])
+
+  useEffect(() => {
+    const newDates: Date[] = [];
+    let day = new Date(startAt.getTime());
+
+    while (differenceInSeconds(endAt, day) > 0) {
+      newDates.push(day);
+      day = addDays(day, 1);
+    }
+
+    setDates(newDates);
+  }, [startAt, endAt])
+
+
   return (
     <div className="calendar">
       <div className="month">
-        <button type="button" className="btn-today">Hoje</button>
-        <h2>Junho 2020</h2>
+        <button
+          type="button"
+          className="btn-today"
+          onClick={() => setStartMonth(startOfMonth(today))}
+        >
+          Hoje
+        </button>
+        <h2>{format(startMonth, 'MMMM yyyy', { locale })}</h2>
         <nav>
-          <button type="button" className="btn-prev">
+          <button
+            type="button"
+            className="btn-prev"
+            onClick={() => setStartMonth(subMonths(startMonth, 1))}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="7.41"
@@ -20,7 +79,11 @@ const Calendar = () => {
               />
             </svg>
           </button>
-          <button type="button" className="btn-next">
+          <button
+            type="button"
+            className="btn-next"
+            onClick={() => setStartMonth(addMonths(startMonth, 1))}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="7.41"
@@ -46,41 +109,14 @@ const Calendar = () => {
         <li>Sáb</li>
       </ul>
       <ul className="days">
-        <li className="month-prev">28</li>
-        <li className="month-prev">29</li>
-        <li className="month-prev">30</li>
-        <li>1</li>
-        <li>2</li>
-        <li>3</li>
-        <li>4</li>
-        <li>5</li>
-        <li>6</li>
-        <li>7</li>
-        <li>8</li>
-        <li>9</li>
-        <li>10</li>
-        <li>11</li>
-        <li>12</li>
-        <li>13</li>
-        <li>14</li>
-        <li>15</li>
-        <li>16</li>
-        <li>17</li>
-        <li>18</li>
-        <li>19</li>
-        <li>20</li>
-        <li>21</li>
-        <li>22</li>
-        <li className="active">23</li>
-        <li>24</li>
-        <li>25</li>
-        <li>26</li>
-        <li>27</li>
-        <li>28</li>
-        <li>29</li>
-        <li>30</li>
-        <li>31</li>
-        <li className="month-next">1</li>
+        {dates.map((dt, index) => (
+          <li
+            key={index}
+            className={getDayClassName(dt)}
+            onClick={() => setSelectedDate(dt)}
+          >
+            {format(dt, 'd')}</li>
+        ))}
       </ul>
     </div>
   )
