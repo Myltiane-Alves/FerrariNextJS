@@ -12,14 +12,24 @@ import {
 } from "date-fns";
 import locale from "date-fns/locale/pt-BR";
 
-const Calendar = () => {
+type CalendarProps = {
+  selected?: Date | null;
+  onChange?: (date: Date | null) => void;
+}
+
+const Calendar = ({
+  selected = undefined,
+  onChange = () => {},
+} : CalendarProps) => {
 
   const [today, setToday] = useState(new Date());
   const [startMonth, setStartMonth] = useState(startOfMonth(new Date()));
   const [dates, setDates] = useState<Date[]>([]);
   const [startAt, setStartAt] = useState(startOfWeek(startMonth));
   const [endAt, setEndAt] = useState(endOfWeek(endOfMonth(startMonth)));
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    selected ? selected : new Date()
+  );
 
   const getDayClassName = useCallback((dt: Date) => {
     return [
@@ -48,6 +58,11 @@ const Calendar = () => {
     setDates(newDates);
   }, [startAt, endAt])
 
+  useEffect(() => {
+    if(typeof onChange === 'function') {
+      onChange(selectedDate);
+    }
+  }, [selectedDate])
 
   return (
     <div className="calendar">
