@@ -12,6 +12,8 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import axios from "axios";
 import { useRouter } from "next/router";
 import locale from 'date-fns/locale/pt-BR';
+import { get } from "lodash";
+import Toast from "../components/Toast";
 
 type FormData = {
   scheduleAt: string;
@@ -89,47 +91,25 @@ const ComponentPage: NextPage<ComponentPageProps> = (props) => {
                     required: "Selecione o horário desejado",
                   })}
                 />
-                <span>{format(new Date(option.id), "HH:mm", {locale })}</span>
+                <span>{format(new Date(option.time), "HH:mm", {locale })}</span>
               </label>
 
             ))}
-
-            <label>
-              <input type="radio" name="option" value="10:00" />
-              <span>10:00</span>
-            </label>
-
-            <label>
-              <input type="radio" name="option" value="11:00" />
-              <span>11:00</span>
-            </label>
-
-            <label>
-              <input type="radio" name="option" value="12:00" />
-              <span>12:00</span>
-            </label>
-
-            <label>
-              <input type="radio" name="option" value="13:00" />
-              <span>13:00</span>
-            </label>
-
-            <label>
-              <input type="radio" name="option" value="14:00" />
-              <span>14:00</span>
-            </label>
-
-            <label>
-              <input type="radio" name="option" value="15:00" />
-              <span>15:00</span>
-            </label>
           </div>
 
+            <Toast
+              type="danger"
+              open={Object.keys(errors).length > 0}
+              onClose={() => clearErrors()}
+            >
+
+              {Object.keys(errors).map((err) => (
+                get(errors, `${err}.message`, 'Verifique os Horários')
+              ))}
+            </Toast>
           <Footer />
         </form>
-
       </Page>
-
     </Fragment>
   )
 }
