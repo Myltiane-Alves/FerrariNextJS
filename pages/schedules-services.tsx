@@ -1,5 +1,8 @@
 
 import { NextPage } from "next";
+import { useRouter } from "next/router";
+import { ChangeEvent } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 import Page from "../components/Page";
 import Footer from "../components/Page/Footer";
@@ -9,9 +12,37 @@ import Toast from "../components/Toast";
 import { ScheduleService } from "../types/ScheduleService";
 import { formatCurrency } from "../utils/formatCurrency";
 
+type FormData = {
+  services: number[];
+  server?: unknown;
+}
 
 const SchedulesServicesPage = () => {
-  const { services } = useScheduleService();
+  const { services, addSelectedService, removeSelectedService } = useScheduleService();
+
+  const {
+    handleSubmit,
+    setValue,
+    setError,
+    formState: { errors },
+    clearErrors,
+  } = useForm<FormData>();
+  const router = useRouter();
+
+
+  const onChangeService = (cheked: boolean, serviceId: number) => {
+
+    if (cheked) {
+      addSelectedService(serviceId);
+    } else {
+      removeSelectedService(serviceId);
+    }
+
+  }
+
+  const save: SubmitHandler<FormData> = (data) => {
+
+  }
 
   return (
     <Page
@@ -20,7 +51,8 @@ const SchedulesServicesPage = () => {
       id="schedules-services"
       panel={<Panel />}
     >
-      <form >
+      <form onSubmit={handleSubmit(save)}>
+
         <input type="hidden" name="schedule_at" />
         <input type="hidden" name="option" />
 
@@ -29,7 +61,14 @@ const SchedulesServicesPage = () => {
             <label
               key={String(id)}
             >
-              <input type="checkbox" name="service" value={id} />
+              <input
+                type="checkbox"
+                name="service"
+                value={id}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  onChangeService(e.target.checked, Number(id))
+                }}
+              />
               <div className="square">
                 <div></div>
               </div>

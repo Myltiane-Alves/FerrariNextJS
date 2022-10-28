@@ -1,12 +1,14 @@
+import { useState } from "react";
 import { formatCurrency } from "../../../utils/formatCurrency";
 import { useScheduleService } from "../ScheduleServiceContext";
 
 const Panel = () => {
 
   const { selecteds } = useScheduleService();
+  const [opened, setOpened] = useState(false);
 
   return (
-    <aside>
+    <aside className={opened ? 'open' : ''}>
       <header>Resumo</header>
 
       <section>
@@ -26,7 +28,11 @@ const Panel = () => {
       </section>
 
       <footer>
-        <button type="button" id="btn-summary-toggle">
+        <button
+          type="button"
+          id="btn-summary-toggle"
+          onClick={() => setOpened(!opened )}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="12"
@@ -43,7 +49,15 @@ const Panel = () => {
 
         <div>
           <span>Total</span>
-          <span className="total">R$ 0,00</span>
+          <span className="total">
+            {
+              formatCurrency(
+                selecteds
+                  .map((service) => Number(service.price))
+                  .reduce((previous, current) => previous + current, 0)
+              )
+            }
+          </span>
         </div>
       </footer>
     </aside>
