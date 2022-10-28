@@ -6,7 +6,8 @@ type PageProps = {
   children: ReactNode
   title: string
   id: string
-  pageColor?: PageColor
+  pageColor?: PageColor;
+  panel?: ReactNode;
 }
 
 const Page = ({
@@ -14,7 +15,7 @@ const Page = ({
   title,
   id,
   pageColor,
-
+  panel,
 }: PageProps) => {
 
   return (
@@ -26,6 +27,8 @@ const Page = ({
         <main>
           {children}
         </main>
+
+        {panel && panel}
 
       </section>
 
