@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react"
-import Header from "../components/Home/Header";
+import Header from "../components/Header";
 import Page from "../components/Page";
 import Footer from "../components/Page/Footer";
 import { NextPage } from "next";

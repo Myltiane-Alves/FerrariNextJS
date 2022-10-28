@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import Router, { useRouter } from "next/router";
 import { Fragment, useCallback, useState } from "react";
 import Calendar from "../components/Calendar";
-import Header from "../components/Home/Header";
+import Header from "../components/Header";
 import Page from "../components/Page";
 import Footer, { ButtonBack, ButtonContinue } from "../components/Page/Footer";
 import { NextPage } from "next";

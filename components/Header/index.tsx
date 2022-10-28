@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-import { useMenu } from "../../../context/MenuContext";
+import { useMenu } from "../../context/MenuContext";
 
 const Header = () => {
     const {  setIsOpen } = useMenu();
-    
+
     return (
         <>
             <header id="header">

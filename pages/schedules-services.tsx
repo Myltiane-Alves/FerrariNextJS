@@ -1,7 +1,9 @@
 
+import axios from "axios";
+import { get } from "lodash";
 import { NextPage } from "next";
 import { useRouter } from "next/router";
-import { ChangeEvent } from "react";
+import { ChangeEvent, useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import Page from "../components/Page";
@@ -18,7 +20,7 @@ type FormData = {
 }
 
 const SchedulesServicesPage = () => {
-  const { services, addSelectedService, removeSelectedService } = useScheduleService();
+  const { services, selecteds, addSelectedService, removeSelectedService } = useScheduleService();
 
   const {
     handleSubmit,
@@ -40,9 +42,37 @@ const SchedulesServicesPage = () => {
 
   }
 
-  const save: SubmitHandler<FormData> = (data) => {
+  const save: SubmitHandler<FormData> = ({ services }) => {
 
+    if (services.length === 0) {
+      setError('services', {
+        type: "required",
+        message: 'Selecione pelo menos um serviço'
+      });
+
+      return false;
+    }
+
+    axios
+      .post('/api/schedules/services', { services })
+      .then(( ) =>  router.push('/schedules-payment'))
+      .catch((error) => {
+        setError("server", {
+          message: error.response?.data.message ?? error.message,
+        })
+      })
+
+    router.push('/schedules-time-options');
   }
+
+  useEffect(() => {
+    setValue("services", selecteds.map((service) => service.id));
+
+    if(selecteds.length > 0) {
+      clearErrors()
+    }
+
+  }, [selecteds, setValue, clearErrors]);
 
   return (
     <Page
@@ -80,6 +110,15 @@ const SchedulesServicesPage = () => {
             </label>
           ))}
         </div>
+          <Toast
+            type='danger'
+            open={Object.keys(errors).length > 0}
+            onClose={() => clearErrors()}
+          >
+            {Object.keys(errors).map((err) => (
+              get(errors, `${err}.message`, 'Verifique os serviços selecionados.')
+            ))}
+          </Toast>
         <Footer />
       </form>
     </Page>

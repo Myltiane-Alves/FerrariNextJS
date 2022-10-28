@@ -1,8 +1,8 @@
 import { withIronSessionSsr } from "iron-session/next";
 import { GetServerSideProps, GetServerSidePropsContext, NextPage } from "next";
 import Contact from "../components/Home/Contact";
-import Footer from "../components/Home/Footer";
-import Header from "../components/Home/Header";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
 import { sessionOptions } from "../utils/session";
 
 type ComponentPageType = {
