@@ -1,8 +1,8 @@
-import { Fragment, useCallback, useState } from "react"
+import { Fragment, useState } from "react"
 import Header from "../components/Home/Header";
 import Page from "../components/Page";
-import Footer, { ButtonBack, ButtonContinue } from "../components/Page/Footer";
-import { GetServerSideProps, NextPage } from "next";
+import Footer from "../components/Page/Footer";
+import { NextPage } from "next";
 import { withIronSessionSsr } from "iron-session/next";
 import { sessionOptions } from "../utils/session";
 import { format, getDay, parse } from "date-fns";
@@ -24,7 +24,6 @@ type ComponentPageProps = {
   schedule: ScheduleSession;
   timeOptions: TimeOption[];
 }
-
 
 const ComponentPage: NextPage<ComponentPageProps> = (props) => {
   const {
@@ -57,7 +56,7 @@ const ComponentPage: NextPage<ComponentPageProps> = (props) => {
       <Page
         pageColor="blue"
         title="Escolha o Horário"
-        id="schedules-time-options"
+        id="time-options"
       >
 
 
@@ -66,16 +65,16 @@ const ComponentPage: NextPage<ComponentPageProps> = (props) => {
           <hr />
         </header>
 
-        <form action="schedules-services.html">
-          <input type="hidden" name="schedule_at" />
-
+        <form onSubmit={handleSubmit(save)}>
+          <input type="hidden"
+            {...register("scheduleAt", { value: scheduleAt })}
+          />
           <h3>
             {format(parse(scheduleAt!, 'yyyy-MM-dd', new Date()),
               // 'EEEE, dd/MM/yyyy'
               "EEEE, d 'de' MMMM 'de' yyyy",
               { locale }
             )}
-
           </h3>
 
           <div className="options">
@@ -102,7 +101,6 @@ const ComponentPage: NextPage<ComponentPageProps> = (props) => {
               open={Object.keys(errors).length > 0}
               onClose={() => clearErrors()}
             >
-
               {Object.keys(errors).map((err) => (
                 get(errors, `${err}.message`, 'Verifique os Horários')
               ))}
