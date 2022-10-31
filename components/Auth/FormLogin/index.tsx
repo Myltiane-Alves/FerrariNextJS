@@ -1,59 +1,29 @@
-import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useAuth } from "../../../context/AuthContext/useAuth";
-import Alert from "../../Alert";
+import { useAuth } from "../AuthContext";
 
-export type FormData = {
-  email: string;
-  password: string;
-  server?: string;
-}
 
 
 const FormLogin = () => {
-  const { register, handleSubmit, formState: { errors }, setError, clearErrors, watch } = useForm<FormData>();
 
-  const router = useRouter();
-  const email = watch('email');
-  const password = watch('password');
+  const { register, handleSubmit, formState: { errors }, setError, clearErrors, watch } = useForm();
+  const { email, password, onSubmitLogin } = useAuth();
 
-  const onSubmit = (data: FormData) => {
-
-    axios.post(`/auth/login`, data,  {
-    }).then(({ data }) => {
-      router.push('/')
-
-    }).catch((e: any) => setError('server', e.response.data.message));
-  }
-
-
-  useEffect(() => {
-    clearErrors('server');
-
-  }, [email, password])
   return (
     <>
-      <form id="auth-login" onSubmit={handleSubmit<FormData>(onSubmit)}>
+      <form id="auth-login" onSubmit={handleSubmit(onSubmitLogin)}>
         <h1>Fazer login</h1>
 
         <hr />
 
-        {Object.keys(errors).length > 0 && <Alert type="danger">Houve um erro!!!</Alert>}
-
         <div className="field">
-          <input type="email" {...register('email', {
-            required: 'Preencha o e-mail',
-          })}  />
+          <input type="email" value={email} />
           <label htmlFor="email-login">E-mail</label>
         </div>
 
         <div className="field">
-          <input type="password" id="password" {...register('password', {
-            required: 'Preencha a senha',
-          })} />
+          <input type="password" id="password" value={password} />
           <label htmlFor="password">Digite sua Senha</label>
         </div>
 

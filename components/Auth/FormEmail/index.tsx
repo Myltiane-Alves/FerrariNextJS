@@ -1,27 +1,40 @@
+import axios from "axios";
 import Link from "next/link";
+import { useState } from "react";
+import { useAuth } from "../AuthContext";
+
 
 const FormEmail = () => {
-    return (
-        <>
-            <form id="auth-email">
-                <h1>Autenticação</h1>
 
-                <hr />
+  const { email, setEmail, onSubmitEmail } = useAuth();
 
-                <div className="field">
-                    <input type="email" name="email" id="email" />
-                    <label htmlFor="email">E-mail</label>
-                </div>
+  return (
+    <>
+      <form id="auth-email" onSubmit={onSubmitEmail}>
+        <h1>Autenticação</h1>
 
-                <div className="actions">
-                    <Link href="auth.html#register">
-                        <a className="link">Criar uma Conta</a>
-                    </Link>
-                    <button type="submit">Próxima</button>
-                </div>
-            </form>
-        </>
-    )
+        <hr />
+
+        <div className="field">
+          <input
+            type="email"
+            name="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <label htmlFor="email">E-mail</label>
+        </div>
+
+        <div className="actions">
+          <Link href="auth.html#register">
+            <a className="link">Criar uma Conta</a>
+          </Link>
+          <button type="submit">Próxima</button>
+        </div>
+      </form>
+    </>
+  )
 }
 
 export default FormEmail;

@@ -1,5 +1,6 @@
 import { NextPage } from "next";
 import Link from "next/link";
+import AuthProvider from "../components/Auth/AuthContext";
 import FormEmail from "../components/Auth/FormEmail";
 import FormForget from "../components/Auth/FormForget";
 import FormLogin from "../components/Auth/FormLogin";
@@ -7,12 +8,9 @@ import FormRegister from "../components/Auth/FormRegister";
 import FormReset from "../components/Auth/FormReset";
 import { useAuth } from "../context/AuthContext/useAuth";
 
-
-const ComponentPage: NextPage = () => {
-
+const AuthMain = () => {
 
   const { currentForm } = useAuth();
-
   return (
     <>
       <main id="auth">
@@ -32,6 +30,15 @@ const ComponentPage: NextPage = () => {
         </section>
       </main>
     </>
+  )
+}
+
+const ComponentPage: NextPage = () => {
+
+  return (
+    <AuthProvider>
+      <AuthMain />
+    </AuthProvider>
   )
 }
 
