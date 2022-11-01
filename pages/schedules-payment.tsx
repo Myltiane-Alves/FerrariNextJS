@@ -1,6 +1,6 @@
 import { addMonths, format } from "date-fns";
 import { get } from "lodash";
-import { GetServerSidePropsContext,  NextPage } from "next";
+import { GetServerSidePropsContext, NextPage, Redirect } from "next";
 import { Fragment, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { IMaskInput } from "react-imask";
@@ -15,385 +15,396 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { withIronSessionApiRoute, withIronSessionSsr } from "iron-session/next";
 import { sessionOptions } from "../utils/session";
+import { withAuthentication } from "../utils/withAuthentication";
 // import { ScheduleCreate } from "../types/ScheduleCreate";
 
 type ScheduleCreate = {
-  installments: number;
-  cardToken: string;
-  paymentMethod: string;
-  document: string;
+    installments: number;
+    cardToken: string;
+    paymentMethod: string;
+    document: string;
 }
 
 type FormData = {
-  number: string;
-  name: string;
-  expiry: string;
-  cvv: string;
-  bank: string;
-  installments: string;
-  cardDocument: string;
-  token: string;
-  server?: string;
+    number: string;
+    name: string;
+    expiry: string;
+    cvv: string;
+    bank: string;
+    installments: string;
+    cardDocument: string;
+    token: string;
+    server?: string;
 }
 
 type Issuer = {
-  id: string;
-  name: string;
+    id: string;
+    name: string;
 }
 
 type InstallmentOption = {
-  number: number;
-  value: number;
-  description: string;
+    number: number;
+    value: number;
+    description: string;
 }
 
 declare var MercadoPago: any;
 
 type ComponentPageProps = {
-  amount: string;
+    amount: string;
 }
 
 const ComponentPage: NextPage<ComponentPageProps> = ({ amount }) => {
 
-  const router = useRouter();
-  const {
-    handleSubmit,
-    register,
-    setError,
-    formState: { errors },
-    clearErrors,
-    setValue,
-    watch,
-  } = useForm<FormData>();
+    const router = useRouter();
+    const {
+        handleSubmit,
+        register,
+        setError,
+        formState: { errors },
+        clearErrors,
+        setValue,
+        watch,
+    } = useForm<FormData>();
 
-  const [mp, setMp] = useState<any>(null);
-  const number = watch("number");
-  const name = watch("name");
-  const expiry = watch("expiry");
-  const cvv = watch("cvv");
-  const installments = watch("installments");
-  const cardDocument = watch("cardDocument");
-  const [bin, setBin] = useState("");
-  const [issuers, setIssuers] = useState<Issuer[]>([]);
-  const [installmentOptions, setInstallmentOptions] = useState<InstallmentOption[]>([]);
-  const [flipped, setFlipped] = useState(false);
-  const [paymentMethodId, setPaymentMethodId] = useState("");
+    const [mp, setMp] = useState<any>(null);
+    const number = watch("number");
+    const name = watch("name");
+    const expiry = watch("expiry");
+    const cvv = watch("cvv");
+    const installments = watch("installments");
+    const cardDocument = watch("cardDocument");
+    const [bin, setBin] = useState("");
+    const [issuers, setIssuers] = useState<Issuer[]>([]);
+    const [installmentOptions, setInstallmentOptions] = useState<InstallmentOption[]>([]);
+    const [flipped, setFlipped] = useState(false);
+    const [paymentMethodId, setPaymentMethodId] = useState("");
 
-  const bank = watch("bank");
-  const [token, setToken] = useState("");
+    const bank = watch("bank");
+    const [token, setToken] = useState("");
 
-  const createPayment = (data: ScheduleCreate) => {
-    axios
-      .post('/api/payment', data)
-      .then(() => router.push(`/schedules-summary`))
-      .catch(error => {
-        setError('server', {
-          message: error.message
+    const createPayment = (data: ScheduleCreate) => {
+        axios
+            .post('/api/payment', data)
+            .then(() => router.push(`/schedules-summary`))
+            .catch(error => {
+                setError('server', {
+                    message: error.message
+                });
+            });
+    }
+
+    const onSubmit: SubmitHandler<FormData> = (data) => {
+
+        const expirtyMonth = Number(expiry.split("/")[0]);
+        const expirtyYear = Number(expiry.split("/")[1]);
+
+        if (expirtyMonth < 0 && expirtyMonth > 12) {
+            setError("expiry", {
+                message: "Mês de vencimento inválido",
+            });
+            return;
+        }
+
+        if (expirtyYear < new Date().getFullYear()) {
+            setError("expiry", {
+                message: "Ano de vencimento inválido",
+            });
+            return;
+        }
+
+        if (number.length < 15) {
+            setError("number", {
+                message: "Número do cartão inválido",
+            });
+            return;
+        }
+
+
+        if (cvv.length < 3) {
+            setError('cvv', {
+                message: 'CVV inválido'
+            });
+            return;
+        }
+
+        if (!isCPF(cardDocument) && !isCNPJ(cardDocument)) {
+            setError('cardDocument', {
+                message: 'CPF ou CNPJ inválido'
+            });
+            return;
+        }
+
+        mp.createCardToken({
+            cardNumber: number,
+            cardholderName: name,
+            cardExpirationMonth: expiry.split("/")[0],
+            cardExpirationYear: expiry.split("/")[1],
+            securityCode: cvv,
+            identificationType: cardDocument.length === 11 ? 'CPF' : 'CNPJ',
+            identificationNumber: cardDocument,
+        }).then((response: any) => createPayment({
+            cardToken: response.id,
+            document: cardDocument,
+            installments: Number(installments),
+            paymentMethod: paymentMethodId,
+        })).catch((error: any) => {
+            setError('token', {
+                message: error.message
+            });
         });
-      });
-  }
-
-  const onSubmit: SubmitHandler<FormData> = (data) => {
-
-    const expirtyMonth = Number(expiry.split("/")[0]);
-    const expirtyYear = Number(expiry.split("/")[1]);
-
-    if (expirtyMonth < 0 && expirtyMonth > 12) {
-      setError("expiry", {
-        message: "Mês de vencimento inválido",
-      });
-      return;
     }
 
-    if (expirtyYear < new Date().getFullYear()) {
-      setError("expiry", {
-        message: "Ano de vencimento inválido",
-      });
-      return;
-    }
-
-    if (number.length < 15) {
-      setError("number", {
-        message: "Número do cartão inválido",
-      });
-      return;
-    }
-
-
-    if (cvv.length < 3) {
-      setError('cvv', {
-        message: 'CVV inválido'
-      });
-      return;
-    }
-
-    if (!isCPF(cardDocument) && !isCNPJ(cardDocument)) {
-      setError('cardDocument', {
-        message: 'CPF ou CNPJ inválido'
-      });
-      return;
-    }
-
-    mp.createCardToken({
-      cardNumber: number,
-      cardholderName: name,
-      cardExpirationMonth: expiry.split("/")[0],
-      cardExpirationYear: expiry.split("/")[1],
-      securityCode: cvv,
-      identificationType: cardDocument.length === 11 ? 'CPF' : 'CNPJ',
-      identificationNumber: cardDocument,
-    }).then((response: any) =>   createPayment({
-        cardToken: response.id,
-        document: cardDocument,
-        installments: Number(installments),
-        paymentMethod: paymentMethodId,
-    })).catch((error: any) => {
-      setError('token', {
-        message: error.message
-      });
-    });
-  }
-
-  const initMercadoPago = () => {
-    new MercadoPago(process.env.MERCADOPAGO_KEY, {
-      language: 'pt-BR',
-    })
-  }
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      if (mp) {
-        setValue('number', '5031 4332 1540 6351');
-        setValue('name', 'APRO');
-        setValue('expiry', format(addMonths(new Date(), 1), 'MM/yy'));
-        setValue('cvv', '123');
-      }
-
-    }
-  }, [mp]);
-
-
-  useEffect(() => {
-    if (number && number.length >= 6 && number.substring(0, 6) !== bin) {
-      setBin(number.substring(0, 6));
-    }
-  }, [number]);
-
-  useEffect(() => {
-    if (mp && bin) {
-      mp.getInstallments({
-        bin,
-        amount,
-        locale: 'pt-BR',
-      }).then((response: any) => {
-
-        const options = response[0];
-
-        setPaymentMethodId(options.payment_method_id);
-        setValue('installments', '1')
-
-        setInstallmentOptions(options.payer_costs.map(
-          (cost: any) => ({
-            number: cost.installments,
-            value: cost.total_amount,
-            description: cost.recommended_message,
-          })
-        ));
-      }).catch((error: any) => {
-        setError('installments', {
-          message: error.message
-        });
-      });
-    }
-  }, [bin]);
-
-  useEffect(() => {
-    if (bin && paymentMethodId) {
-      mp.getIssuers({
-        bin,
-        paymentMethodId,
-      }).then((response: any) => {
-        setIssuers(response.map((issuer: any) => ({
-          id: issuer.id,
-          name: issuer.name,
-        })));
-      }).catch((error: any) => {
-        setError('bank', {
-          message: error.message
+    const initMercadoPago = () => {
+        new MercadoPago(process.env.MERCADOPAGO_KEY, {
+            language: 'pt-BR',
         })
-      });
     }
-  }, [bin, paymentMethodId]);
 
-  useEffect(() => {
-    console.log({ errors });
-  }, [errors]);
+    useEffect(() => {
+        if (process.env.NODE_ENV === "development") {
+            if (mp) {
+                setValue('number', '5031 4332 1540 6351');
+                setValue('name', 'APRO');
+                setValue('expiry', format(addMonths(new Date(), 1), 'MM/yy'));
+                setValue('cvv', '123');
+            }
+
+        }
+    }, [mp]);
 
 
-  useEffect(() => {
+    useEffect(() => {
+        if (number && number.length >= 6 && number.substring(0, 6) !== bin) {
+            setBin(number.substring(0, 6));
+        }
+    }, [number]);
 
-    const script: HTMLScriptElement = document.createElement("script");
+    useEffect(() => {
+        if (mp && bin) {
+            mp.getInstallments({
+                bin,
+                amount,
+                locale: 'pt-BR',
+            }).then((response: any) => {
 
-    script.src = 'https://sdk.mercadopago.com/js/v2';
+                const options = response[0];
 
-    script.onload = initMercadoPago;
+                setPaymentMethodId(options.payment_method_id);
+                setValue('installments', '1')
 
-    document.body.appendChild(script);
+                setInstallmentOptions(options.payer_costs.map(
+                    (cost: any) => ({
+                        number: cost.installments,
+                        value: cost.total_amount,
+                        description: cost.recommended_message,
+                    })
+                ));
+            }).catch((error: any) => {
+                setError('installments', {
+                    message: error.message
+                });
+            });
+        }
+    }, [bin]);
 
-  }, [])
+    useEffect(() => {
+        if (bin && paymentMethodId) {
+            mp.getIssuers({
+                bin,
+                paymentMethodId,
+            }).then((response: any) => {
+                setIssuers(response.map((issuer: any) => ({
+                    id: issuer.id,
+                    name: issuer.name,
+                })));
+            }).catch((error: any) => {
+                setError('bank', {
+                    message: error.message
+                })
+            });
+        }
+    }, [bin, paymentMethodId]);
 
-  return (
-    <Fragment>
-      <Header />
-      <Page
-        pageColor="blue"
-        title="Dados do Cartão de Crédito"
-        id=""
-      >
-        <form onSubmit={handleSubmit(onSubmit)}>
+    useEffect(() => {
+        console.log({ errors });
+    }, [errors]);
 
-          <input type="hidden" name="schedule_at" />
-          <input type="hidden" name="option" />
-          <input type="hidden" name="service" />
 
-          <div className="form-creditcard">
-            <div className="form-fields">
-              <div className="field">
-                <IMaskInput
-                  mask={'0000 0000 0000 0000'}
-                  unmask={true}
-                  value={number}
-                  onAccept={(value) => setValue('number', String(value))}
-                />
-                <label htmlFor="number">Número do Cartão</label>
-              </div>
+    useEffect(() => {
 
-              <div className="fields">
-                <div className="field">
-                  <IMaskInput
-                    mask={'00/0000'}
-                    placeholder={'MM/AAAA'}
-                    unmask={false}
-                    value={expiry}
-                    onAccept={(value) => setValue('expiry', String(value))}
-                  />
-                  <label htmlFor="expiry">Validade</label>
-                </div>
-                <div className="field">
-                  <IMaskInput
-                    mask={`000[0]`}
-                    placeholderChar={'MM/AAAA'}
-                    unmask={true}
-                    value={cvv}
-                    onAccept={(value) => setValue('cvv', String(value))}
-                    onFocus={() => setFlipped(true)}
-                    onBlur={() => setFlipped(false)}
-                  />
-                  <label htmlFor="cvv">Código de Segurança</label>
-                </div>
-              </div>
+        const script: HTMLScriptElement = document.createElement("script");
 
-              <div className="field">
-                <input id="name" className="name" {...register('name', {
-                  required: 'Preencha o nome impresso no cartão.'
-                })} />
-                <label htmlFor="name">Nome Impresso no Cartão</label>
-              </div>
+        script.src = 'https://sdk.mercadopago.com/js/v2';
 
-              {issuers.length > 1 &&
-                <div className="field">
-                  <select
-                    id="issuers"
-                    {...register('bank', {
-                      required: 'Selecione o banco emissor do cartão.'
-                    })}
-                  >
-                    {issuers.map(({ id, name }, index) => (
-                      <option key={index} value={id}>{name}</option>
-                    ))}
-                  </select>
-                  <label htmlFor="issuers">Banco Emissor</label>
-                </div>
-              }
+        script.onload = initMercadoPago;
 
-              <div className="field">
-                <select
-                  disabled={installmentOptions.length === 0}
-                  id="installments"
-                  {...register('installments', {
-                    required: 'Selecione a quantidade de parcelas.'
-                  })}
+        document.body.appendChild(script);
 
-                >
-                  {installmentOptions.map(({ number, description }, index) => (
-                    <option key={index} value={number}>{description}</option>
-                  ))}
-                </select>
-                <label htmlFor="installments">Parcelas</label>
-              </div>
-              <div className="field">
-                <IMaskInput
-                  id="card-document"
-                  mask={[{
-                    mask: '000.000.000-00',
-                  }, {
-                    mask: '00.000.000/0000-00'
-                  }]}
-                  unmask={true}
-                  value={cardDocument}
-                  onAccept={(value) => setValue('cardDocument', String(value))}
-                />
-                <label htmlFor="card-document">CPF ou CNPJ do Titular do Cartão</label>
-              </div>
-            </div>
+    }, [])
 
-            <div className="form-card">
-              <CreditCard
-                cvv={cvv}
-                expiry={expiry}
-                name={name}
-                number={number}
-                flipped={flipped}
-              />
-            </div>
-          </div>
+    return (
+        <Fragment>
+            <Header />
+            <Page
+                pageColor="blue"
+                title="Dados do Cartão de Crédito"
+                id=""
+            >
+                <form onSubmit={handleSubmit(onSubmit)}>
 
-          <Toast
-            type='danger'
-            open={Object.keys(errors).length > 0}
-            onClose={() => clearErrors()}
-          >
-            {Object.keys(errors).map((err) => (
-              get(errors, `${err}.message`, 'Verifique os serviços selecionados.')
-            ))}
-          </Toast>
+                    <input type="hidden" name="schedule_at" />
+                    <input type="hidden" name="option" />
+                    <input type="hidden" name="service" />
 
-          <Footer />
-        </form>
+                    <div className="form-creditcard">
+                        <div className="form-fields">
+                            <div className="field">
+                                <IMaskInput
+                                    mask={'0000 0000 0000 0000'}
+                                    unmask={true}
+                                    value={number}
+                                    onAccept={(value) => setValue('number', String(value))}
+                                />
+                                <label htmlFor="number">Número do Cartão</label>
+                            </div>
 
-      </Page>
-    </Fragment>
-  )
+                            <div className="fields">
+                                <div className="field">
+                                    <IMaskInput
+                                        mask={'00/0000'}
+                                        placeholder={'MM/AAAA'}
+                                        unmask={false}
+                                        value={expiry}
+                                        onAccept={(value) => setValue('expiry', String(value))}
+                                    />
+                                    <label htmlFor="expiry">Validade</label>
+                                </div>
+                                <div className="field">
+                                    <IMaskInput
+                                        mask={`000[0]`}
+                                        placeholderChar={'MM/AAAA'}
+                                        unmask={true}
+                                        value={cvv}
+                                        onAccept={(value) => setValue('cvv', String(value))}
+                                        onFocus={() => setFlipped(true)}
+                                        onBlur={() => setFlipped(false)}
+                                    />
+                                    <label htmlFor="cvv">Código de Segurança</label>
+                                </div>
+                            </div>
+
+                            <div className="field">
+                                <input id="name" className="name" {...register('name', {
+                                    required: 'Preencha o nome impresso no cartão.'
+                                })} />
+                                <label htmlFor="name">Nome Impresso no Cartão</label>
+                            </div>
+
+                            {issuers.length > 1 &&
+                                <div className="field">
+                                    <select
+                                        id="issuers"
+                                        {...register('bank', {
+                                            required: 'Selecione o banco emissor do cartão.'
+                                        })}
+                                    >
+                                        {issuers.map(({ id, name }, index) => (
+                                            <option key={index} value={id}>{name}</option>
+                                        ))}
+                                    </select>
+                                    <label htmlFor="issuers">Banco Emissor</label>
+                                </div>
+                            }
+
+                            <div className="field">
+                                <select
+                                    disabled={installmentOptions.length === 0}
+                                    id="installments"
+                                    {...register('installments', {
+                                        required: 'Selecione a quantidade de parcelas.'
+                                    })}
+
+                                >
+                                    {installmentOptions.map(({ number, description }, index) => (
+                                        <option key={index} value={number}>{description}</option>
+                                    ))}
+                                </select>
+                                <label htmlFor="installments">Parcelas</label>
+                            </div>
+                            <div className="field">
+                                <IMaskInput
+                                    id="card-document"
+                                    mask={[{
+                                        mask: '000.000.000-00',
+                                    }, {
+                                        mask: '00.000.000/0000-00'
+                                    }]}
+                                    unmask={true}
+                                    value={cardDocument}
+                                    onAccept={(value) => setValue('cardDocument', String(value))}
+                                />
+                                <label htmlFor="card-document">CPF ou CNPJ do Titular do Cartão</label>
+                            </div>
+                        </div>
+
+                        <div className="form-card">
+                            <CreditCard
+                                cvv={cvv}
+                                expiry={expiry}
+                                name={name}
+                                number={number}
+                                flipped={flipped}
+                            />
+                        </div>
+                    </div>
+
+                    <Toast
+                        type='danger'
+                        open={Object.keys(errors).length > 0}
+                        onClose={() => clearErrors()}
+                    >
+                        {Object.keys(errors).map((err) => (
+                            get(errors, `${err}.message`, 'Verifique os serviços selecionados.')
+                        ))}
+                    </Toast>
+
+                    <Footer />
+                </form>
+
+            </Page>
+        </Fragment>
+    )
 }
 
 export default ComponentPage;
 
 type PaymentResponse = {
-  amount: number;
+    amount: number;
 }
 
-export const getServerSideProps = withIronSessionSsr(async ({req}: GetServerSidePropsContext) => {
+export const getServerSideProps = withAuthentication(async ({ req }: GetServerSidePropsContext) => {
+    try {
 
-  const { data } = await axios.get<PaymentResponse>('/payment', {
-    baseURL: process.env.API_URL,
-    params: {
-      services: req.session.schedule.services?.toString(),
+
+    const { data } = await axios.get<PaymentResponse>('/payment', {
+        baseURL: process.env.API_URL,
+        params: {
+            services: req.session.schedule.services?.toString(),
+        }
+    });
+
+    return {
+        props: {
+            amount: String(data.amount),
+        } as ComponentPageProps,
     }
-  });
-
-  return {
-    props: {
-      amount: String(data.amount),
-    } as ComponentPageProps,
-  }
-}, sessionOptions)
+    } catch (error: any) {
+        return {
+            statusCode: 401,
+            redirect: {
+                destination: `/schedules-services`,
+            } as Redirect,
+        }
+    }
+});

@@ -42,5 +42,4 @@ const ComponentPage: NextPage = () => {
   )
 }
 
-
 export default ComponentPage;

@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { FormDataLogin } from "../../../types/Auth/FormDataLogin";
 import { useAuth } from "../AuthContext";
 
-
 const FormLogin = () => {
 
   const { register, handleSubmit } = useForm<FormDataLogin>();

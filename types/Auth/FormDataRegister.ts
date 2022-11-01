@@ -3,4 +3,5 @@ export type FormDataRegister = {
   birthAt: string;
   email: string;
   password: string;
+  passwordConfirm: string;
 }

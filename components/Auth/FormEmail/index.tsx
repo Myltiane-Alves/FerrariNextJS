@@ -1,6 +1,4 @@
-import axios from "axios";
 import Link from "next/link";
-import { useState } from "react";
 import { useAuth } from "../AuthContext";
 
 
@@ -27,7 +25,7 @@ const FormEmail = () => {
         </div>
 
         <div className="actions">
-          <Link href="auth.html#register">
+          <Link href="/auth#register">
             <a className="link">Criar uma Conta</a>
           </Link>
           <button type="submit">Próxima</button>

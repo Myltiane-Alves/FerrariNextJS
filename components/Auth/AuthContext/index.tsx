@@ -1,9 +1,10 @@
 import axios from "axios";
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import { useRouter } from "next/router";
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { AuthContextType } from "../../../types/Auth/AuthContextType";
 import { AuthProviderProps } from "../../../types/Auth/AuthProviderProps";
 import { CurrentFormType } from "../../../types/Auth/CurrentFormType";
-import { FormDataForget } from "../../../types/Auth/FormDataForget";
+
 import { FormDataLogin } from "../../../types/Auth/FormDataLogin";
 import { FormDataPasswordReset } from "../../../types/Auth/FormDataPasswordReset";
 import { FormDataRegister } from "../../../types/Auth/FormDataRegister";
@@ -11,90 +12,148 @@ import { FormEmailResponse } from "../../../types/Auth/FormEmailResponse";
 import { FormLoginResponse } from "../../../types/Auth/FormLoginResponse";
 
 const AuthContext = createContext<AuthContextType>({
-  currentForm: 'email',
-  email: '',
-  setEmail: () => {},
-  onSubmitEmail: () => {},
-  onSubmitLogin: () => {},
-  onSubmitRegister: () => {},
-  onSubmitPasswordReset: () => {},
-  onSubmitForget: () => {},
+    currentForm: 'email',
+    email: '',
+    setEmail: () => { },
+    onSubmitEmail: () => { },
+    onSubmitLogin: () => { },
+    onSubmitRegister: () => { },
+    onSubmitPasswordReset: () => { },
+    onSubmitForget: () => { },
+    loadingFormForget: false,
 })
 
 
-export const AuthProvider = ({ children}: AuthProviderProps) => {
+export const AuthProvider = ({ children }: AuthProviderProps) => {
 
-  const [currentForm, setCurrentForm] = useState<CurrentFormType>('email');
-  const [email, setEmail] = useState('');
+    const router = useRouter();
+    const [currentForm, setCurrentForm] = useState<CurrentFormType>('email');
+    const [email, setEmail] = useState('');
+    const [loadingFormForget, setLoadingFormForget] = useState(false);
+    const [nextURL, setNextURL] = useState('/profile');
+    const [token, setToken] = useState<string | null>(null);
 
-  const onSubmitEmail = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    const onSubmitEmail = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
 
-    axios.post<FormEmailResponse>(`/auth`, {
-      email
-    }, {
-      baseURL: process.env.APi_URL
-    }).then(({ data: {exists}}) => {
+        axios.post<FormEmailResponse>(`/auth`, {
+            email
+        }, {
+            baseURL: process.env.APi_URL
+        }).then(({ data: { exists } }) => {
 
-      if(exists) {
-        setCurrentForm('login');
-      } else {
-        setCurrentForm('register');
-      }
+            if (exists) {
+                setCurrentForm('login');
+            } else {
+                setCurrentForm('register');
+            }
 
-    }).catch(error => console.error(error));
+        }).catch(error => console.error(error));
 
-  }
+    }, [email]);
 
-  const onSubmitLogin = (data: FormDataLogin) => {
+    const redirectToNextURL = useCallback(() => router.push(nextURL), [nextURL, router]);
 
-    axios.post<FormLoginResponse>(`/api/login`, data).then(({ data: {token} }) => {
+    const onSubmitLogin = (data: FormDataLogin) => {
 
-    }).catch((e: any) => console.error(e));
-  }
+        axios.post<FormLoginResponse>(`/api/login`, data).then(({ data: { token } }) => {
+            setToken(token);
+            redirectToNextURL();
 
-  const onSubmitRegister = (data: FormDataRegister) => {
+        }).catch((e: any) => console.error(e));
+    }
 
-    axios.post<FormLoginResponse>(`/api/register`, data).then(({ data: {token} }) => {
+    const onSubmitRegister = (data: FormDataRegister) => {
 
-    }).catch((e: any) => console.error(e));
-  }
+        axios.post<FormLoginResponse>(`/api/register`, data).then(({ data: { token } }) => {
+            setToken(token);
+            redirectToNextURL();
+        }).catch((e: any) => console.error(e));
+    }
 
-  const onSubmitPasswordReset = (data: FormDataPasswordReset) => {
+    const onSubmitPasswordReset = useCallback((data: FormDataPasswordReset) => {
 
-    axios.post<FormLoginResponse>(`/api/password-reset`, data).then(({ data: {token} }) => {
+        data.token = String(router.query.token) as string;
 
-    }).catch((e: any) => console.error(e));
-  }
+        axios.post<FormLoginResponse>(`/api/password-reset`, data).then(({ data: { token } }) => {
+            setToken(token);
+            redirectToNextURL();
+        }).catch((e: any) => console.error(e));
 
-  const onSubmitForget = (data: FormDataForget) => {
+    }, [router]);
 
-    axios.post<{ success: boolean}>(`/auth/forget`, data, {
-      baseURL: process.env.APi_URL
-    }).then(({ data: {success} }) => {
-    }).catch((error: any) => console.error(error));
-  }
+    const onSubmitForget = useCallback(() => {
+        setLoadingFormForget(true);
+        axios.post<{ success: boolean }>(`/auth/forget`, { email }, {
+            baseURL: process.env.APi_URL
+        }).then(({ data: { success } }) => {
+        }).catch((error: any) => console.error(error)).finally(() => setLoadingFormForget(false));
+    }, [email]);
 
 
-  return<AuthContext.Provider value={{
-    currentForm,
-    email,
-    setEmail,
-    onSubmitEmail,
-    onSubmitLogin,
-    onSubmitRegister,
-    onSubmitPasswordReset,
-    onSubmitForget
-  }}>{children}</AuthContext.Provider>
+    const getHashForm = useCallback(() => {
+        let hash = window.location.hash.replace('#', '') as CurrentFormType;
+
+        if (!['email', 'login', 'register', 'forget', 'reset'].includes(hash) || (!email && ['login', 'forget'].includes(hash))) {
+            hash = email;
+        }
+
+        return hash;
+
+    }, [email]);
+
+
+    const handlerCurrentForm = useCallback(() => {
+
+        setCurrentForm(getHashForm());
+
+    }, [setCurrentForm, getHashForm]);
+
+    useEffect(() => {
+        window.addEventListener('load', handlerCurrentForm);
+        window.addEventListener('hashchange', handlerCurrentForm);
+        router.events.on('hashChangeComplete', handlerCurrentForm);
+
+        return () => {
+            window.removeEventListener('load', handlerCurrentForm);
+            window.removeEventListener('hashchange', handlerCurrentForm);
+            router.events.off('hashChangeComplete', handlerCurrentForm);
+        }
+
+    }, [router, handlerCurrentForm]);
+
+    useEffect(() => {
+
+        setCurrentForm(getHashForm());
+
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.has('next')) {
+            setNextURL(String(params.get('next')));
+        }
+
+    }, []);
+
+    return <AuthContext.Provider value={{
+        currentForm,
+        email,
+        setEmail,
+        onSubmitEmail,
+        onSubmitLogin,
+        onSubmitRegister,
+        onSubmitPasswordReset,
+        onSubmitForget,
+        loadingFormForget,
+    }}>{children}</AuthContext.Provider>
 }
 export default AuthProvider;
 
 
 export const useAuth = () => {
-  const context =  useContext(AuthContext);
+    const context = useContext(AuthContext);
 
-  if(!context) {
-    throw new Error('useAuth must be used whitin an AuthProvider')
-  }
-  return context;
+    if (!context) {
+        throw new Error('useAuth must be used whitin an AuthProvider')
+    }
+    return context;
 }
