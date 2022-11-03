@@ -2,8 +2,8 @@ import { IronSessionOptions } from "iron-session";
 import { ScheduleSession } from "../types/ScheduleSession";
 
 export const sessionOptions: IronSessionOptions = {
-  password: String(process.env.SECRET_COOKIE_PASSWORD),
   cookieName: 'ferrari-lab/iron-session',
+  password: String(process.env.SECRET_COOKIE_PASSWORD),
   cookieOptions: {
     secure: process.env.NODE_ENV === 'production'
   }
@@ -11,7 +11,7 @@ export const sessionOptions: IronSessionOptions = {
 
 declare module 'iron-session' {
   interface IronSessionData {
-    schedule?: ScheduleSession;
+    schedule: ScheduleSession;
     token: string;
   }
 }
