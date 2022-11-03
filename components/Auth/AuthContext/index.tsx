@@ -2,6 +2,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { AuthContextType } from "../../../types/Auth/AuthContextType";
+import { AuthenticationResponse } from "../../../types/Auth/AuthenticationResponse";
 import { AuthProviderProps } from "../../../types/Auth/AuthProviderProps";
 import { CurrentFormType } from "../../../types/Auth/CurrentFormType";
 
@@ -21,6 +22,10 @@ const AuthContext = createContext<AuthContextType>({
     onSubmitPasswordReset: () => { },
     onSubmitForget: () => { },
     loadingFormForget: false,
+    token: null,
+    // user: null,
+    // setUser: () => { },
+    // logout: () => { }
 })
 
 
@@ -95,7 +100,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         let hash = window.location.hash.replace('#', '') as CurrentFormType;
 
         if (!['email', 'login', 'register', 'forget', 'reset'].includes(hash) || (!email && ['login', 'forget'].includes(hash))) {
-            hash = email;
+            hash = 'email';
         }
 
         return hash;
@@ -108,6 +113,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setCurrentForm(getHashForm());
 
     }, [setCurrentForm, getHashForm]);
+
+    const initAuth = () => {
+
+        axios.get<AuthenticationResponse>("/api/session")
+            .then(({ data: { token } }) => setToken(token))
+    };
 
     useEffect(() => {
         window.addEventListener('load', handlerCurrentForm);
@@ -124,6 +135,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     useEffect(() => {
 
+        initAuth()
         setCurrentForm(getHashForm());
 
         const params = new URLSearchParams(window.location.search);
@@ -144,6 +156,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         onSubmitPasswordReset,
         onSubmitForget,
         loadingFormForget,
+        token,
     }}>{children}</AuthContext.Provider>
 }
 export default AuthProvider;

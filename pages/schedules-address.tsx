@@ -105,13 +105,14 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ addresses, addressSelecte
                                         <strong>{street}{number && <Fragment>, {number}</Fragment>}</strong>
                                         <br />
                                         {complement && <Fragment>{complement} - </Fragment>}
+                                        {district}
                                         <br />
                                         {city} - {state}
                                         <br />
                                         {zipCode}
                                     </address>
                                 </div>
-                                <Link href="/schedules-address-update">
+                                <Link href={`/schedules-address-update?id=${id}`}>
                                     <a className="btn-update">Editar</a>
                                 </Link>
                             </label>
