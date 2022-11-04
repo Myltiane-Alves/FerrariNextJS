@@ -5,14 +5,18 @@ import { ScheduleService } from "./ScheduleService";
 import { TimeOption } from "./TimeOption";
 
 export type Schedule = {
-	timeOptionId: number;
-  billingAddressId: number;
-  scheduleAt: string;
-  services: number[];
-  installments: number;
-  cardToken: string;
-  paymentMethod: string;
-  document: string;
+    id: number;
+    personId: number;
+    timeOptionId: number;
+    PaymentSituationId: number;
+    billingAddressId: number;
+    scheduleAt: string;
+    total: number;
+    installments: number;
+    document: string;
+    paymentMethod: string;
+    cardToken: string;
+    ScheduleService: ScheduleService[];
 
 
 }

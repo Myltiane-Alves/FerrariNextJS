@@ -23,6 +23,9 @@ type ScheduleCreate = {
     cardToken: string;
     paymentMethod: string;
     document: string;
+    cardFirstSixDigits: string;
+    cardLastFourDigits: string;
+    paymentTypeId: string;
 }
 
 type FormData = {
@@ -79,6 +82,7 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ amount }) => {
     const [installmentOptions, setInstallmentOptions] = useState<InstallmentOption[]>([]);
     const [flipped, setFlipped] = useState(false);
     const [paymentMethodId, setPaymentMethodId] = useState("");
+    const [paymentTypeId, setPaymentTypeId] = useState("");
 
     const bank = watch("bank");
     const [token, setToken] = useState("");
@@ -143,11 +147,15 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ amount }) => {
             securityCode: cvv,
             identificationType: cardDocument.length === 11 ? 'CPF' : 'CNPJ',
             identificationNumber: cardDocument,
-        }).then((response: any) => createPayment({
-            cardToken: response.id,
-            document: cardDocument,
-            installments: Number(installments),
-            paymentMethod: paymentMethodId,
+        }).then((response: any) =>
+            createPayment({
+                cardToken: response.id,
+                document: cardDocument,
+                installments: Number(installments),
+                paymentMethod: paymentMethodId,
+                cardFirstSixDigits: response.first_six_digitis,
+                cardLastFourDigits: response.last_four_digitis,
+                paymentTypeId,
         })).catch((error: any) => {
             setError('token', {
                 message: error.message
@@ -191,6 +199,7 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ amount }) => {
                 const options = response[0];
 
                 setPaymentMethodId(options.payment_method_id);
+                setPaymentTypeId(options.payment_type_id);
                 setValue('installments', '1')
 
                 setInstallmentOptions(options.payer_costs.map(

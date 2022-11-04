@@ -3,9 +3,9 @@ import { Fragment, ReactNode } from "react"
 type PageColor = "blue" | "green" | "red" | "yellow";
 
 type PageProps = {
-  children: ReactNode
-  title: string
-  id: string
+  children: ReactNode;
+  title: string | ReactNode;
+  id: string;
   pageColor?: PageColor;
   panel?: ReactNode;
 }
