@@ -6,7 +6,7 @@ import { formatCurrency } from "../../../utils/formatCurrency";
 type ScheduleItemProps = {
     schedule: Schedule;
     token: string;
-    onCanceled: () => void;
+    onCanceled?: () => void;
 }
 const ScheduleItem = ({ schedule, token, onCanceled }: ScheduleItemProps) => {
 

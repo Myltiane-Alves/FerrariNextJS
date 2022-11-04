@@ -55,7 +55,7 @@ const SchedulesServicesPage = () => {
 
     axios
       .post('/api/schedules/services', { services })
-      .then(( ) =>  router.push('/schedules-payment'))
+      .then(( ) =>  router.push('/schedules-address'))
       .catch((error) => {
         setError("server", {
           message: error.response?.data.message ?? error.message,

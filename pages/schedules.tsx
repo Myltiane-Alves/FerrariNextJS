@@ -15,6 +15,7 @@ import { ScheduleSession } from "../types/ScheduleSession";
 import { Schedule } from "../types/Schedule";
 import { redirectToAuth } from "../utils/redirectToAuth";
 import Title from "../components/Page/Title";
+import ScheduleItem from "../components/Schedule/ScheduleItem";
 
 
 type FormData = {
@@ -61,10 +62,11 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ schedules, token, }) => {
                  </ul>
 
                 <Title value="Histórico"/>
-                <p>
-                    Número do Pedido: {String(data.id).padStart(6, "0")}<small>Cartão de Crédito final {schedule.cardLastFourDigits}</small>
-                </p>
 
+                <ul>
+                    {historySchedules.length === 0 && <li>Não há histórico de agendamentos.</li>}
+                    {historySchedules.map((schedule, index) => <ScheduleItem key={index} token={token} schedule={schedule} />)}
+                </ul>
 
                 <Footer
                     buttons={[

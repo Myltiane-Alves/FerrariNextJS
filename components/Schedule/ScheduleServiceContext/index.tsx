@@ -1,10 +1,10 @@
 import axios from "axios";
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import { ScheduleService } from "../../../types/ScheduleService";
+import { Service } from "../../../types/Service";
 
 type ScheduleServiceContextProps = {
-  services: ScheduleService[];
-  selecteds: ScheduleService[];
+  services: Service[];
+  selecteds: Service[];
   addSelectedService: (serviceId: number) => void;
   removeSelectedService: (serviceId: number) => void;
 }
@@ -21,8 +21,8 @@ export default function ScheduleServiceProvider({
   children: ReactNode;
 }) {
 
-  const [services, setServices] = useState<ScheduleService[]>([]);
-  const [selecteds, setSelecteds] = useState<ScheduleService[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selecteds, setSelecteds] = useState<Service[]>([]);
 
   const addSelectedService = (serviceId: number) => {
 
@@ -45,7 +45,7 @@ export default function ScheduleServiceProvider({
 
   }
   const loadServices = () => {
-    axios.get<ScheduleService[]>(`/services`, {
+    axios.get<Service[]>(`/services`, {
       baseURL: process.env.API_URL,
     })
     .then(({ data }) => setServices(data));
