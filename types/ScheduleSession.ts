@@ -5,11 +5,11 @@ export type ScheduleSession = {
     scheduleAt?: string;
     services?: number[];
     timeOptionId?: number;
-    data?: ScheduleCreate;
     billingAddressId?: number;
     cardFirstSixDigits?: string;
     cardLastFourDigits?: string;
     paymentTypeId?: string;
+    // data?: Schedule;
 
-    // data:Schedule | null | undefined;
+    data:Schedule | null | undefined;
 }
