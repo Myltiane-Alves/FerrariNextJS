@@ -1,7 +1,5 @@
-import { format } from "date-fns";
-import locale from "date-fns/locale/pt-BR";
 import { get } from "lodash";
-import { NextPage, Redirect } from "next";
+import { NextPage } from "next";
 import { Fragment, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import Header from "../components/Header";
@@ -9,54 +7,45 @@ import Page from "../components/Page";
 import Footer from "../components/Page/Footer";
 import Toast from "../components/Toast";
 import axios from "axios";
-import { useRouter } from "next/router";
 import { withAuthentication } from "../utils/withAuthentication";
-import { ScheduleSession } from "../types/ScheduleSession";
-import { Schedule } from "../types/Schedule";
-import { redirectToAuth } from "../utils/redirectToAuth";
 import Title from "../components/Page/Title";
-import ScheduleItem from "../components/Schedule/ScheduleItem";
-import { useAuth } from "../components/Auth/AuthContext";
 import { User } from "../types/User";
-import { MeResponse } from "../types/MeResponse";
-
 
 type FormData = {
-    name: string;
-    email: string;
-    birthAt: string;
+    password: string;
+    passwordNew: string;
+    passwordConfirm: string;
     server?: string;
 }
 
 type ComponentPageProps = {
-    user: User;
     token: string;
 }
 
-const ComponentPage: NextPage<ComponentPageProps> = ({ token, user }) => {
+const ComponentPage: NextPage<ComponentPageProps> = ({ token }) => {
 
     const [toastType, setToastType] = useState<'success' | 'danger'>('danger');
     const [toastOpen, setToastOpen] = useState(false);
 
-    const { user: contextUser, setUser } = useAuth();
 
-    const { register, handleSubmit, formState: { errors }, clearErrors, setError } = useForm<FormData>({
-        defaultValues: {
-            name: user.person?.name,
-            email: user.email,
-            birthAt: user.person?.birthAt ? user.person.birthAt.substring(0, 10) : '',
+    const { register, handleSubmit, formState: { errors }, clearErrors, setError } = useForm<FormData>();
+
+    const onSubmit: SubmitHandler<FormData> = ({ password: passwordCurrent, passwordConfirm, passwordNew }) => {
+
+        if (passwordNew !== passwordConfirm) {
+            setError('passwordConfirm', {message: 'Confirme a Senha corretamente.'});
+            return false;
         }
-    })
-
-    const onSubmit: SubmitHandler<FormData> = (data) => {
-
-        axios.put<User>(`/auth/profile`, data, {
+        axios.put<User>(`/auth/password`,  {
+            passwordCurrent,
+            passwordNew,
+        }, {
             baseURL: process.env.API_URL,
             headers: {
                 Authorization: `Bearer ${token}`,
-            },
+            }
         }).then(({ data }) => {
-            setUser(data);
+            // setUser(data);
             setToastType('success');
             setToastOpen(true);
             setTimeout(() => {
@@ -82,34 +71,41 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ token, user }) => {
 
     return (
         <Fragment>
-            <Header>
-                <title>Ferrari - Editar Dados</title>
-            </Header>
+            <Header/>
             <Page
-                title={"Editar Dados"}
-                id="profile"
+                title={"Alterar Senha"}
+                id="change-password"
             >
 
-                <Title value="Dados Pessoais" />
+                <Title value="Informe a sua Senha" />
 
                 <form onSubmit={handleSubmit(onSubmit)}>
+
                     <div className="field">
-                        <input type="text" id="name" {...register('name', {
-                            required: 'Nome é obrigatório',
+                        <input type="password" id="password" {...register('password', {
+                            required: 'Senha é obrigatória',
                         })} />
-                        <label htmlFor="name">Nome Completo</label>
+                        <label htmlFor="password">Senha Atual</label>
+                    </div>
+
+                    <Title value="Crie uma Nova Senha" />
+
+                    <div className="field">
+                        <input type="password" id="password_new" {...register('passwordNew', {
+                            required: 'Nova Senha é obrigatória',
+                        })} />
+                        <label htmlFor="password_new">Nova Senha</label>
                     </div>
 
                     <div className="field">
-                        <input type="email" id="email" {...register('email', {
-                            required: 'E-mail é obrigatório',
-                        })} />
-                        <label htmlFor="email">E-mail</label>
-                    </div>
-
-                    <div className="field">
-                        <input type="date" id="birth_at" {...register('birthAt')} />
-                        <label htmlFor="birth_at">Data de Nascimento</label>
+                        <input
+                            type="password"
+                            id="password_confirm"
+                            {...register('passwordConfirm', {
+                                required: 'Confirmação de Senha é obrigatória',
+                            })}
+                        />
+                        <label htmlFor="password_confirm">Confirme a Nova Senha</label>
                     </div>
 
                     <Toast
@@ -118,7 +114,7 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ token, user }) => {
                         onClose={() => clearErrors()}
                     >
                         {Object.keys(errors).map((err) => (
-                            get(errors, `${err}.message`, 'Verifique os serviços selecionados.')
+                            get(errors, `${err}.message`, 'Houve um problema, tente novamente mais tarde.')
                         ))}
                         {Object.keys(errors).length === 0 && 'Dados atualizados com sucesso.'}
                     </Toast>
@@ -139,28 +135,11 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ token, user }) => {
 
 export default ComponentPage;
 
-export const getServerSideProps = withAuthentication(async (context) => {
-
-    try {
-
-        const { token } = context.req.session;
-
-        const { data: user } = await axios.get<MeResponse>(`/auth/me`, {
-            baseURL: process.env.API_URL,
-            headers: {
-                Authorization: `Bearer ${token}`,
-            }
-        });
-
-        return {
-            props: {
-                user,
-                token,
-            },
-        };
-
-    } catch (e) {
-        return redirectToAuth(context)
-    }
+export const getServerSideProps = withAuthentication(async ({ req: { session: { token } } }) => {
+    return {
+        props: {
+            token
+        },
+    };
 
 });
