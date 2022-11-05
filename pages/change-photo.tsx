@@ -13,6 +13,7 @@ import { User } from "../types/User";
 import { MeResponse } from "../types/MeResponse";
 import { useAuth } from "../components/Auth/AuthContext";
 import { render } from "react-dom";
+import 'cropperjs/dist/cropper.css';
 
 type ComponentPageProps = {
     user: User;
@@ -59,6 +60,7 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ token, user }) => {
                     Authorization: `Bearer ${token}`,
                 },
             }).then(({ data: { photo } }) => {
+                user.photo = photo;
                 setUser({
                     ...stateUser!,
                     photo,
@@ -153,12 +155,10 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ token, user }) => {
                     <Toast
                         type={toastType}
                         open={toastOpen}
-                        onClose={() => clearErrors()}
+                        onClose={() => setError('')}
                     >
-                        {Object.keys(errors).map((err) => (
-                            get(errors, `${err}.message`, 'Verifique os serviços selecionados.')
-                        ))}
-                        {Object.keys(errors).length === 0 && 'Dados atualizados com sucesso.'}
+                        {error && toastType === 'danger' && <p>{error}</p>}
+                        {error && toastType === 'success' && <p>Foto atualizada com sucesso!</p>}
                     </Toast>
 
                     <Footer

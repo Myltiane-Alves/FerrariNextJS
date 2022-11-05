@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import locale from "date-fns/locale/pt-BR";
 import { get } from "lodash";
-import { NextPage, Redirect } from "next";
+import { NextPage} from "next";
 import { Fragment, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import Header from "../components/Header";
@@ -9,17 +9,13 @@ import Page from "../components/Page";
 import Footer from "../components/Page/Footer";
 import Toast from "../components/Toast";
 import axios from "axios";
-import { useRouter } from "next/router";
 import { withAuthentication } from "../utils/withAuthentication";
-import { ScheduleSession } from "../types/ScheduleSession";
-import { Schedule } from "../types/Schedule";
 import { redirectToAuth } from "../utils/redirectToAuth";
 import Title from "../components/Page/Title";
-import ScheduleItem from "../components/Schedule/ScheduleItem";
 import { useAuth } from "../components/Auth/AuthContext";
 import { User } from "../types/User";
 import { MeResponse } from "../types/MeResponse";
-
+import Head from "next/head";
 
 type FormData = {
     name: string;
@@ -82,14 +78,14 @@ const ComponentPage: NextPage<ComponentPageProps> = ({ token, user }) => {
 
     return (
         <Fragment>
-            <Header>
+            <Head>
                 <title>Ferrari - Editar Dados</title>
-            </Header>
+            </Head>
+            <Header />
             <Page
                 title={"Editar Dados"}
                 id="profile"
             >
-
                 <Title value="Dados Pessoais" />
 
                 <form onSubmit={handleSubmit(onSubmit)}>
@@ -153,10 +149,7 @@ export const getServerSideProps = withAuthentication(async (context) => {
         });
 
         return {
-            props: {
-                user,
-                token,
-            },
+            props: { user,token, },
         };
 
     } catch (e) {

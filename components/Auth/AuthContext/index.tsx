@@ -5,12 +5,12 @@ import { AuthContextType } from "../../../types/Auth/AuthContextType";
 import { AuthenticationResponse } from "../../../types/Auth/AuthenticationResponse";
 import { AuthProviderProps } from "../../../types/Auth/AuthProviderProps";
 import { CurrentFormType } from "../../../types/Auth/CurrentFormType";
-
 import { FormDataLogin } from "../../../types/Auth/FormDataLogin";
 import { FormDataPasswordReset } from "../../../types/Auth/FormDataPasswordReset";
 import { FormDataRegister } from "../../../types/Auth/FormDataRegister";
 import { FormEmailResponse } from "../../../types/Auth/FormEmailResponse";
 import { FormLoginResponse } from "../../../types/Auth/FormLoginResponse";
+import { User } from "../../../types/User";
 
 const AuthContext = createContext<AuthContextType>({
     currentForm: 'email',
@@ -23,9 +23,9 @@ const AuthContext = createContext<AuthContextType>({
     onSubmitForget: () => { },
     loadingFormForget: false,
     token: null,
-    // user: null,
-    // setUser: () => { },
-    // logout: () => { }
+    user: null,
+    setUser: () => { },
+    logout: () => { }
 })
 
 
@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [loadingFormForget, setLoadingFormForget] = useState(false);
     const [nextURL, setNextURL] = useState('/profile');
     const [token, setToken] = useState<string | null>(null);
+    const [user, setUser] = useState<User | null>(null);
 
     const onSubmitEmail = useCallback((e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -71,8 +72,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const onSubmitRegister = (data: FormDataRegister) => {
 
         axios.post<FormLoginResponse>(`/api/register`, data).then(({ data: { token } }) => {
+
             setToken(token);
             redirectToNextURL();
+
         }).catch((e: any) => console.error(e));
     }
 
@@ -81,17 +84,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         data.token = String(router.query.token) as string;
 
         axios.post<FormLoginResponse>(`/api/password-reset`, data).then(({ data: { token } }) => {
+
             setToken(token);
             redirectToNextURL();
+
         }).catch((e: any) => console.error(e));
 
     }, [router]);
 
     const onSubmitForget = useCallback(() => {
+
         setLoadingFormForget(true);
+
         axios.post<{ success: boolean }>(`/auth/forget`, { email }, {
             baseURL: process.env.APi_URL
         }).then(({ data: { success } }) => {
+            console.log({ success });
+
         }).catch((error: any) => console.error(error)).finally(() => setLoadingFormForget(false));
     }, [email]);
 
@@ -114,6 +123,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     }, [setCurrentForm, getHashForm]);
 
+    const logout = () => {
+
+        axios.get("/api/logout").then(() => {
+            setToken(null);
+            setUser(null);
+            router.push("/auth");
+        });
+
+    };
+
     const initAuth = () => {
 
         axios.get<AuthenticationResponse>("/api/session")
@@ -121,6 +140,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     useEffect(() => {
+
+        if (token) {
+
+            try {
+
+                const { id, email, photo, personId, name } = JSON.parse(
+                    String(Buffer.from(token.split(".")[1], 'base64'))
+                );
+
+                setUser({
+                    id,
+                    email,
+                    personId,
+                    photo,
+                    person: {
+                        id: personId,
+                        name,
+                    },
+                });
+
+            } catch (e: any) {
+                console.error("Not parse user from token.");
+            }
+
+        }
+
+    }, [token]);
+    useEffect(() => {
+
         window.addEventListener('load', handlerCurrentForm);
         window.addEventListener('hashchange', handlerCurrentForm);
         router.events.on('hashChangeComplete', handlerCurrentForm);
@@ -136,6 +184,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     useEffect(() => {
 
         initAuth()
+
         setCurrentForm(getHashForm());
 
         const params = new URLSearchParams(window.location.search);
@@ -157,12 +206,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         onSubmitForget,
         loadingFormForget,
         token,
+        user,
+        setUser,
+        logout,
     }}>{children}</AuthContext.Provider>
 }
 export default AuthProvider;
 
-
 export const useAuth = () => {
+
     const context = useContext(AuthContext);
 
     if (!context) {

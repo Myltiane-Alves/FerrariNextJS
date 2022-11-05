@@ -7,16 +7,17 @@ import Header from '../components/Header'
 import Service from '../components/Home/Service'
 import { sessionOptions } from '../utils/session'
 import { withIronSessionSsr } from 'iron-session/next'
+import { Fragment } from 'react'
 
 const ComponentPage: NextPage = () => {
   return (
-    <>
+    <Fragment>
       <Header />
       <Banner/>
       <Service />
       <Contact />
       <Footer />
-    </>
+    </Fragment>
   )
 }
 
